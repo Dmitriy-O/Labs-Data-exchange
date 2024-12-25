@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+option java_package = "org.byovsiannikov.common.grpc";
+option java_outer_classname = "BookingProto";
+
+package booking;
+
+// Сервіс для управління бронюваннями
+service BookingService {
+  rpc BookTicket (BookRequest) returns (BookResponse);
+  rpc CancelBooking (CancelRequest) returns (CancelResponse);
+  rpc GetBooking (GetRequest) returns (GetResponse);
+  rpc UpdateBooking (UpdateRequest) returns (UpdateResponse); // New method
+  rpc DeleteBooking (DeleteRequest) returns (DeleteResponse); // New method
+  rpc GetAllBookings (EmptyRequest) returns (GetAllResponse);
+}
+
+// Запит на бронювання квитка
+message BookRequest {
+  string user_id = 1;
+  string movie_id = 2;
+  int32 seat_number = 3;
+}
+
+// Відповідь на бронювання квитка
+message BookResponse {
+  bool success = 1;
+  string booking_id = 2;
+  string message = 3;
+}
+
+// Запит на скасування бронювання
+message CancelRequest {
+  string booking_id = 1;
+}
+
+// Відповідь на скасування бронювання
+message CancelResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Запит на отримання інформації про бронювання
+message GetRequest {
+  string booking_id = 1;
+}
+
+// Відповідь з інформацією про бронювання
+message GetResponse {
+  string booking_id = 1;
+  string user_id = 2;
+  string movie_id = 3;
+  int32 seat_number = 4;
+  string status = 5;
+}
+
+// Запит на оновлення бронювання
+message UpdateRequest {
+  string booking_id = 1;
+  int32 seat_number = 2;
+}
+
+// Відповідь на оновлення бронювання
+message UpdateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Запит на видалення бронювання
+message DeleteRequest {
+  string booking_id = 1;
+}
+
+// Відповідь на видалення бронювання
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Запит на отримання всіх бронювань
+message EmptyRequest {}
+
+// Відповідь з усіма бронюваннями
+message GetAllResponse {
+  repeated GetResponse bookings = 1;
+}
