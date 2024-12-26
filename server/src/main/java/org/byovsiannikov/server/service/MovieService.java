@@ -14,7 +14,7 @@ public class MovieService {
 
     private final MovieRepository movieRepository;
 
-    @Autowired // Ін'єкція через конструктор
+    @Autowired
     public MovieService(MovieRepository movieRepository) {
         this.movieRepository = movieRepository;
     }

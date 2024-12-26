@@ -35,7 +35,4 @@ public class Movie {
     @Column(nullable = false)
     private Integer duration;
 
-    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    private List<Screening> screenings;
 }

@@ -6,7 +6,4 @@ import org.byovsiannikov.server.model.Movie;
 
 @Repository
 public interface MovieRepository extends JpaRepository<Movie, Long> {
-    // Додаткові методи, якщо необхідно
-    // Наприклад, пошук фільмів за жанром
-    // List<Movie> findByGenre(String genre);
 }
