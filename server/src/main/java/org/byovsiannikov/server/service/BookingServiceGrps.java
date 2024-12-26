@@ -127,6 +127,31 @@ public class BookingServiceGrps {
             responseObserver.onCompleted();
         }
 
+        @Override
+        public void updateBooking(UpdateRequest request, StreamObserver<UpdateResponse> responseObserver) {
+            String bookingId = request.getBookingId();
+            int newSeatNumber = request.getSeatNumber();
+
+            Booking booking = bookings.get(bookingId);
+            if (booking != null && booking.getStatus().equals("CONFIRMED")) {
+                booking.setSeatNumber(newSeatNumber);
+                bookings.put(bookingId, booking);
+
+                UpdateResponse response = UpdateResponse.newBuilder()
+                        .setSuccess(true)
+                        .setMessage("Бронирование обновлено")
+                        .build();
+                responseObserver.onNext(response);
+            } else {
+                UpdateResponse response = UpdateResponse.newBuilder()
+                        .setSuccess(false)
+                        .setMessage("Бронирование не найдено или не может быть обновлено")
+                        .build();
+                responseObserver.onNext(response);
+            }
+            responseObserver.onCompleted();
+        }
+
     }
 
     private static class Booking {
@@ -146,6 +171,10 @@ public class BookingServiceGrps {
 
         public String getBookingId() {
             return bookingId;
+        }
+
+        public void setSeatNumber (int seatNumber) {
+            this.seatNumber = seatNumber;
         }
 
         public String getUserId() {

@@ -5,47 +5,47 @@ option java_outer_classname = "BookingProto";
 
 package booking;
 
-// Сервіс для управління бронюваннями
+// Сервис для управления бронюваннями
 service BookingService {
   rpc BookTicket (BookRequest) returns (BookResponse);
   rpc CancelBooking (CancelRequest) returns (CancelResponse);
   rpc GetBooking (GetRequest) returns (GetResponse);
-  rpc UpdateBooking (UpdateRequest) returns (UpdateResponse); // New method
-  rpc DeleteBooking (DeleteRequest) returns (DeleteResponse); // New method
+  rpc UpdateBooking (UpdateRequest) returns (UpdateResponse); // Новый метод
+  rpc DeleteBooking (DeleteRequest) returns (DeleteResponse); // Новый метод
   rpc GetAllBookings (EmptyRequest) returns (GetAllResponse);
 }
 
-// Запит на бронювання квитка
+// Запрос на бронирование билета
 message BookRequest {
   string user_id = 1;
   string movie_id = 2;
   int32 seat_number = 3;
 }
 
-// Відповідь на бронювання квитка
+// Ответ на бронирование билета
 message BookResponse {
   bool success = 1;
   string booking_id = 2;
   string message = 3;
 }
 
-// Запит на скасування бронювання
+// Запрос на отмену бронирования
 message CancelRequest {
   string booking_id = 1;
 }
 
-// Відповідь на скасування бронювання
+// Ответ на отмену бронирования
 message CancelResponse {
   bool success = 1;
   string message = 2;
 }
 
-// Запит на отримання інформації про бронювання
+// Запрос на получение информации о бронировании
 message GetRequest {
   string booking_id = 1;
 }
 
-// Відповідь з інформацією про бронювання
+// Ответ с информацией о бронировании
 message GetResponse {
   string booking_id = 1;
   string user_id = 2;
@@ -54,33 +54,33 @@ message GetResponse {
   string status = 5;
 }
 
-// Запит на оновлення бронювання
+// Запрос на обновление бронирования
 message UpdateRequest {
   string booking_id = 1;
   int32 seat_number = 2;
 }
 
-// Відповідь на оновлення бронювання
+// Ответ на обновление бронирования
 message UpdateResponse {
   bool success = 1;
   string message = 2;
 }
 
-// Запит на видалення бронювання
+// Запрос на удаление бронирования
 message DeleteRequest {
   string booking_id = 1;
 }
 
-// Відповідь на видалення бронювання
+// Ответ на удаление бронирования
 message DeleteResponse {
   bool success = 1;
   string message = 2;
 }
 
-// Запит на отримання всіх бронювань
+// Запрос на получение всех бронирований
 message EmptyRequest {}
 
-// Відповідь з усіма бронюваннями
+// Ответ со всеми бронированиями
 message GetAllResponse {
   repeated GetResponse bookings = 1;
 }

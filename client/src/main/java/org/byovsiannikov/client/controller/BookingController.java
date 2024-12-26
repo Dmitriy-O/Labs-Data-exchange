@@ -77,15 +77,5 @@ public class BookingController {
     }
 
 
-    @DeleteMapping("/{bookingId}")
-    public ResponseEntity<String> deleteBooking(@PathVariable(name = "bookingId") String bookingId) {
-        try {
-            BookingProto.DeleteResponse response = grpcBookingClient.deleteBooking(bookingId);
-            String json = JsonFormat.printer().print(response);
-            return ResponseEntity.ok(json);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(e.getMessage());
-        }
-    }
 
 }
