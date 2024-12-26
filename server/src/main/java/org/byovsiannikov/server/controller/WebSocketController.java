@@ -17,7 +17,7 @@ public class WebSocketController {
     @MessageMapping("/chat.addUser") // Коли клієнт надсилає повідомлення на /app/chat.addUser
     @SendTo("/topic/public")
     public ChatMessage addUser(ChatMessage message) {
-        message.setType(ChatMessage.MessageType.JOIN);
+        // Не изменяем тип сообщения, используем тот, который пришёл от клиента
         return message;
     }
 }
