@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Cinema GraphQL Client</title>
+    <style>
+        /* Вбудований CSS для стилізації сторінки */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background-color: #fff;
+            padding: 25px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 40px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 12px 25px;
+            margin-top: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .response {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 10px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .orders-table th, .orders-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .orders-table th {
+            background-color: #343a40;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Cinema GraphQL Client</h1>
+
+    <!-- Форма для додавання фільму -->
+    <div class="section">
+        <h2>Додати Фільм</h2>
+        <form id="addFilmForm">
+            <label for="filmTitle">Назва:</label>
+            <input type="text" id="filmTitle" name="title" required>
+
+            <label for="filmGenre">Жанр:</label>
+            <input type="text" id="filmGenre" name="genre" required>
+
+            <label for="filmReleaseDate">Дата Випуску:</label>
+            <input type="date" id="filmReleaseDate" name="releaseDate" required>
+
+            <label for="filmDuration">Тривалість (хвилин):</label>
+            <input type="number" id="filmDuration" name="duration" min="1" required>
+
+            <label for="filmPrice">Ціна ($):</label> <!-- Додане поле ціни -->
+            <input type="number" id="filmPrice" name="price" step="0.01" min="0" required>
+
+            <button type="submit">Додати Фільм</button>
+        </form>
+        <div id="addFilmResponse" class="response">Відповідь буде тут...</div>
+    </div>
+
+    <!-- Форма для додавання попкорну -->
+    <div class="section">
+        <h2>Додати Попкорн</h2>
+        <form id="addPopcornForm">
+            <label for="popcornSize">Розмір:</label>
+            <select id="popcornSize" name="size" required>
+                <option value="" disabled selected>Виберіть розмір</option>
+                <option value="Small">Малий</option>
+                <option value="Medium">Середній</option>
+                <option value="Large">Великий</option>
+            </select>
+
+            <label for="popcornPrice">Ціна ($):</label>
+            <input type="number" id="popcornPrice" name="price" step="0.01" min="0" required>
+
+            <button type="submit">Додати Попкорн</button>
+        </form>
+        <div id="addPopcornResponse" class="response">Відповідь буде тут...</div>
+    </div>
+
+    <!-- Форма для оформлення замовлення -->
+    <div class="section">
+        <h2>Оформити Замовлення</h2>
+        <form id="placeOrderForm">
+            <label for="orderPopcorn">Попкорн:</label>
+            <select id="orderPopcorn" name="popcornId" required>
+                <option value="" disabled selected>Виберіть попкорн</option>
+                <!-- Опції будуть завантажені динамічно -->
+            </select>
+
+            <label for="orderFilm">Фільм:</label>
+            <select id="orderFilm" name="filmId" required>
+                <option value="" disabled selected>Виберіть фільм</option>
+                <!-- Опції будуть завантажені динамічно -->
+            </select>
+
+            <label for="orderQuantity">Кількість:</label>
+            <input type="number" id="orderQuantity" name="quantity" min="1" required>
+
+            <button type="submit">Оформити Замовлення</button>
+        </form>
+        <div id="placeOrderResponse" class="response">Відповідь буде тут...</div>
+    </div>
+
+    <!-- Розділ для відображення всіх замовлень -->
+    <div class="section">
+        <h2>Всі Замовлення</h2>
+        <button id="fetchOrdersButton">Завантажити Замовлення</button>
+        <div id="ordersTableContainer" class="response">Відповідь буде тут...</div>
+    </div>
+</div>
+
+<script>
+    // JavaScript код для обробки форм та взаємодії з GraphQL сервером
+    const GRAPHQL_ENDPOINT = 'http://localhost:8080/graphql'; // Переконайтеся, що цей URL правильний
+
+    // Функція для додавання фільму
+    document.getElementById('addFilmForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const title = document.getElementById('filmTitle').value.trim();
+        const genre = document.getElementById('filmGenre').value.trim();
+        const releaseDate = document.getElementById('filmReleaseDate').value;
+        const duration = parseInt(document.getElementById('filmDuration').value);
+        const price = parseFloat(document.getElementById('filmPrice').value); // Отримання ціни
+
+        const mutation = `
+                mutation AddFilm($title: String!, $genre: String!, $releaseDate: String!, $duration: Int!, $price: Float!) {
+                    addFilm(title: $title, genre: $genre, releaseDate: $releaseDate, duration: $duration, price: $price) {
+                        id
+                        title
+                        genre
+                        releaseDate
+                        duration
+                        price
+                    }
+                }
+            `;
+
+        const variables = { title, genre, releaseDate, duration, price };
+
+        try {
+            const response = await fetch(GRAPHQL_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: mutation, variables })
+            });
+
+            const result = await response.json();
+
+            if (result.errors) {
+                document.getElementById('addFilmResponse').textContent = 'Помилка: ' + result.errors[0].message;
+            } else {
+                document.getElementById('addFilmResponse').textContent = JSON.stringify(result.data.addFilm, null, 2);
+                // Очистити форму
+                event.target.reset();
+                // Оновити список фільмів для замовлень
+                fetchFilmOptions();
+            }
+        } catch (error) {
+            document.getElementById('addFilmResponse').textContent = 'Помилка: ' + error;
+        }
+    });
+
+    // Функція для додавання попкорну
+    document.getElementById('addPopcornForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const size = document.getElementById('popcornSize').value;
+        const price = parseFloat(document.getElementById('popcornPrice').value);
+
+        const mutation = `
+                mutation AddPopcorn($size: String!, $price: Float!) {
+                    addPopcorn(size: $size, price: $price) {
+                        id
+                        size
+                        price
+                    }
+                }
+            `;
+
+        const variables = { size, price };
+
+        try {
+            const response = await fetch(GRAPHQL_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: mutation, variables })
+            });
+
+            const result = await response.json();
+
+            if (result.errors) {
+                document.getElementById('addPopcornResponse').textContent = 'Помилка: ' + result.errors[0].message;
+            } else {
+                document.getElementById('addPopcornResponse').textContent = JSON.stringify(result.data.addPopcorn, null, 2);
+                // Оновити список попкорнів для замовлень
+                fetchPopcornOptions();
+                // Очистити форму
+                event.target.reset();
+            }
+        } catch (error) {
+            document.getElementById('addPopcornResponse').textContent = 'Помилка: ' + error;
+        }
+    });
+
+    // Функція для завантаження опцій попкорну
+    async function fetchPopcornOptions() {
+        const query = `
+                query {
+                    getAllPopcorns {
+                        id
+                        size
+                        price
+                    }
+                }
+            `;
+
+        try {
+            const response = await fetch(GRAPHQL_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+
+            const result = await response.json();
+
+            if (result.errors) {
+                console.error('Помилка завантаження попкорну:', result.errors[0].message);
+                return;
+            }
+
+            const popcorns = result.data.getAllPopcorns;
+
+            const orderPopcornSelect = document.getElementById('orderPopcorn');
+            orderPopcornSelect.innerHTML = '<option value="" disabled selected>Виберіть попкорн</option>';
+
+            popcorns.forEach(popcorn => {
+                const option = document.createElement('option');
+                option.value = popcorn.id;
+                option.textContent = `${popcorn.size} - $${popcorn.price.toFixed(2)}`;
+                orderPopcornSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Помилка завантаження попкорну:', error);
+        }
+    }
+
+    // Функція для завантаження опцій фільмів
+    async function fetchFilmOptions() {
+        const query = `
+                query {
+                    getAllFilms {
+                        id
+                        title
+                        genre
+                        price
+                    }
+                }
+            `;
+
+        try {
+            const response = await fetch(GRAPHQL_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+
+            const result = await response.json();
+
+            if (result.errors) {
+                console.error('Помилка завантаження фільмів:', result.errors[0].message);
+                return;
+            }
+
+            const films = result.data.getAllFilms;
+
+            const orderFilmSelect = document.getElementById('orderFilm');
+            orderFilmSelect.innerHTML = '<option value="" disabled selected>Виберіть фільм</option>';
+
+            films.forEach(film => {
+                const option = document.createElement('option');
+                option.value = film.id;
+                option.textContent = `${film.title} (${film.genre}) - $${film.price.toFixed(2)}`; // Відображення ціни фільму
+                orderFilmSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Помилка завантаження фільмів:', error);
+        }
+    }
+
+    // Викликаємо функції при завантаженні сторінки
+    window.onload = function() {
+        fetchPopcornOptions();
+        fetchFilmOptions();
+    };
+
+    // Функція для оформлення замовлення
+    document.getElementById('placeOrderForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const popcornId = document.getElementById('orderPopcorn').value;
+        const filmId = document.getElementById('orderFilm').value;
+        const quantity = parseInt(document.getElementById('orderQuantity').value);
+
+        const mutation = `
+                mutation PlaceOrder($popcornId: ID!, $filmId: ID!, $quantity: Int!) {
+                    placeOrder(popcornId: $popcornId, filmId: $filmId, quantity: $quantity) {
+                        id
+                        popcorn {
+                            size
+                            price
+                        }
+                        film {
+                            id
+                            title
+                            genre
+                            price
+                        }
+                        quantity
+                        totalPrice
+                        orderDate
+                    }
+                }
+            `;
+
+        const variables = { popcornId, filmId, quantity };
+
+        try {
+            const response = await fetch(GRAPHQL_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: mutation, variables })
+            });
+
+            const result = await response.json();
+
+            if (result.errors) {
+                document.getElementById('placeOrderResponse').textContent = 'Помилка: ' + result.errors[0].message;
+            } else {
+                document.getElementById('placeOrderResponse').textContent = JSON.stringify(result.data.placeOrder, null, 2);
+                // Очистити форму
+                event.target.reset();
+                // Оновити список замовлень
+                fetchAllOrders();
+            }
+        } catch (error) {
+            document.getElementById('placeOrderResponse').textContent = 'Помилка: ' + error;
+        }
+    });
+
+    // Функція для отримання всіх замовлень
+    document.getElementById('fetchOrdersButton').addEventListener('click', fetchAllOrders);
+
+    async function fetchAllOrders() {
+        const query = `
+                query {
+                    getAllOrders {
+                        id
+                        popcorn {
+                            size
+                            price
+                        }
+                        film {
+                            id
+                            title
+                            genre
+                            price
+                        }
+                        quantity
+                        totalPrice
+                        orderDate
+                    }
+                }
+            `;
+
+        try {
+            const response = await fetch(GRAPHQL_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+
+            const result = await response.json();
+
+            if (result.errors) {
+                document.getElementById('ordersTableContainer').innerHTML = 'Помилка: ' + result.errors[0].message;
+                return;
+            }
+
+            const orders = result.data.getAllOrders;
+            displayOrdersTable(orders);
+        } catch (error) {
+            document.getElementById('ordersTableContainer').textContent = 'Помилка: ' + error;
+        }
+    }
+
+    // Функція для відображення замовлень у таблиці
+    function displayOrdersTable(orders) {
+        if (orders.length === 0) {
+            document.getElementById('ordersTableContainer').innerHTML = '<p>Немає замовлень.</p>';
+            return;
+        }
+
+        let tableHTML = `
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Попкорн</th>
+                            <th>Фільм</th>
+                            <th>Кількість</th>
+                            <th>Загальна Ціна</th>
+                            <th>Дата Замовлення</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+        orders.forEach(order => {
+            tableHTML += `
+                    <tr>
+                        <td>${order.id}</td>
+                        <td>${order.popcorn.size} - $${order.popcorn.price.toFixed(2)}</td>
+                        <td>${order.film.title} (${order.film.genre}) - $${order.film.price.toFixed(2)}</td> <!-- Відображення ціни фільму -->
+                        <td>${order.quantity}</td>
+                        <td>$${order.totalPrice.toFixed(2)}</td>
+                        <td>${order.orderDate}</td>
+                    </tr>
+                `;
+        });
+
+        tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+        document.getElementById('ordersTableContainer').innerHTML = tableHTML;
+    }
+</script>
+</body>
+</html>

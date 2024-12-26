@@ -1,0 +1,40 @@
+type Film {
+    id: ID!
+    title: String!
+    genre: String!
+    releaseDate: String!
+    duration: Int!
+    price: Float! # Додане поле ціни
+}
+
+type Popcorn {
+    id: ID!
+    size: String!
+    price: Float!
+}
+
+type Order {
+    id: ID!
+    popcorn: Popcorn!
+    film: Film!
+    quantity: Int!
+    totalPrice: Float!
+    orderDate: String!
+}
+
+type Query {
+    getAllFilms: [Film!]!
+    getFilmById(id: ID!): Film
+    getAllPopcorns: [Popcorn!]!
+    getPopcornById(id: ID!): Popcorn
+    getAllOrders: [Order!]!
+    getOrderById(id: ID!): Order
+}
+
+type Mutation {
+    addFilm(title: String!, genre: String!, releaseDate: String!, duration: Int!, price: Float!): Film! # Додане поле ціни
+    updateFilm(id: ID!, title: String, genre: String, releaseDate: String, duration: Int, price: Float): Film
+    deleteFilm(id: ID!): Boolean
+    addPopcorn(size: String!, price: Float!): Popcorn!
+    placeOrder(popcornId: ID!, filmId: ID!, quantity: Int!): Order!
+}
